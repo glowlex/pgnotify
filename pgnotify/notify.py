@@ -1,11 +1,16 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import errno
-import fcntl
+try:
+    import fcntl
+except:
+    pass
 import os
 import select
 import signal
 import sys
+import platform
+import warnings
 
 import psycopg2
 from logx import log
@@ -99,14 +104,18 @@ def await_pg_notifications(
     original_handlers = {}
 
     try:
+        wakeup = None
         if signals_to_handle:
             for s in signals_to_handle:
                 original_handlers[s] = signal.signal(s, empty_signal_handler)
-            wakeup = get_wakeup_fd()
-            listen_on = [cc, wakeup]
+            listen_on = [cc]
+            if not platform.system().startswith('Windows'):
+                wakeup = get_wakeup_fd()
+                listen_on.append(wakeup)
+            else:
+                warnings.warn("on windows not all signals available", Warning)
         else:
             listen_on = [cc]
-            wakeup = None
 
         while True:
             try:
