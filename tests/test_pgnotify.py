@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import os
 import signal
+import sys
 
 import psycopg2
 from pytest import raises
@@ -9,7 +10,7 @@ from sqlalchemy import create_engine
 from sqlbag import S
 
 from pgnotify import await_pg_notifications
-from pgnotify.notify import get_dbapi_connection
+from pgnotify.notify import get_dbapi_connection, pg_notify
 
 SIGNALS_TO_HANDLE = [signal.SIGINT]
 
@@ -49,13 +50,16 @@ def test_pg_notify(db):
         else:
             assert n.channel == "hello"
             assert n.payload == "here is my message"
-            os.kill(os.getpid(), signal.SIGINT)
-
-    with raises(KeyboardInterrupt):
-        for n in await_pg_notifications(
-            db, "hello", timeout=0.1, yield_on_timeout=True
-        ):
-            os.kill(os.getpid(), signal.SIGINT)
+            if sys.platform != 'win32':
+                os.kill(os.getpid(), signal.SIGINT)
+            else:
+                break
+    if sys.platform != 'win32':
+        with raises(KeyboardInterrupt):
+            for n in await_pg_notifications(
+                db, "hello", timeout=0.1, yield_on_timeout=True
+            ):
+                os.kill(os.getpid(), signal.SIGINT)
 
 
 def test_dynamic_timeout(db):
@@ -85,10 +89,41 @@ def test_dynamic_timeout(db):
             _n = n[0]
             assert _n.channel == "hello"
             assert _n.payload == "here is my message"
-            os.kill(os.getpid(), signal.SIGINT)
+            if sys.platform != 'win32':
+                os.kill(os.getpid(), signal.SIGINT)
+            else:
+                break
 
-    with raises(KeyboardInterrupt):
-        for n in await_pg_notifications(
-            db, "hello", timeout=0.1, yield_on_timeout=True
-        ):
-            os.kill(os.getpid(), signal.SIGINT)
+    if sys.platform != 'win32':
+        with raises(KeyboardInterrupt):
+            for n in await_pg_notifications(
+                db, "hello", timeout=0.1, yield_on_timeout=True
+            ):
+                os.kill(os.getpid(), signal.SIGINT)
+
+
+def test_notify(db):
+    first = True
+    for n in await_pg_notifications(
+        db,
+        ["hello", "'hello2'", "hello3"],
+        timeout=0.1,
+        yield_on_timeout=True,
+    ):
+        if first and n is None:
+            pg_notify(db, "hello", "here is my message")
+            pg_notify(db, "'hello2'", "'1'); SELECT pg_notify('hello3', 'injection'")
+            first = False
+            continue
+        if n is None:
+            break
+
+        if n.channel == "hello":
+            assert n.payload == "here is my message"
+            continue
+        elif n.channel == "'hello2'":
+            assert n.payload == "'1'); SELECT pg_notify('hello3', 'injection'"
+            continue
+        elif n.channel == "hello3":
+            raise Exception('sql injection occurred')
+        raise Exception('should be unreachable')
