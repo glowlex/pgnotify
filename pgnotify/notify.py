@@ -72,6 +72,17 @@ def log_notification(_n):
     log.debug("NOTIFY: {}, {}, {}".format(_n.pid, _n.channel, _n.payload))
 
 
+def pg_notify(dburi_or_sqlaengine_or_dbapiconnection, channel, payload):
+    """Send PostgreSQL notifications to channel with a payload"""
+    connection = get_dbapi_connection(dburi_or_sqlaengine_or_dbapiconnection)
+    try:
+        with connection:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT pg_notify(%s, %s);", (channel, payload))
+    finally:
+        connection.close()
+
+
 def await_pg_notifications(
     dburi_or_sqlaengine_or_dbapiconnection,
     channels=None,

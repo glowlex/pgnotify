@@ -6,4 +6,5 @@ from .notify import (  # noqa
     await_pg_notifications,
     get_dbapi_connection,
     start_listening,
+    pg_notify,
 )
