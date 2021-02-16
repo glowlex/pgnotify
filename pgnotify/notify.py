@@ -9,7 +9,6 @@ import os
 import select
 import signal
 import sys
-import platform
 import warnings
 
 import psycopg2
@@ -120,7 +119,7 @@ def await_pg_notifications(
             for s in signals_to_handle:
                 original_handlers[s] = signal.signal(s, empty_signal_handler)
             listen_on = [cc]
-            if not platform.system().startswith('Windows'):
+            if sys.platform != 'win32':
                 wakeup = get_wakeup_fd()
                 listen_on.append(wakeup)
             else:
@@ -132,7 +131,7 @@ def await_pg_notifications(
             try:
                 if timeout_is_callable:
                     _timeout = timeout()
-                    log.debug("dynamic timeout of {_timeout} seconds")
+                    log.debug("dynamic timeout of {} seconds".format(_timeout))
                 else:
                     _timeout = timeout
                 _timeout = max(0, _timeout)
@@ -151,7 +150,7 @@ def await_pg_notifications(
                     sig = signal.Signals(signal_int)
                     signal_name = signal.Signals(sig).name
 
-                    log.info(f"woken from slumber by signal: {signal_name}")
+                    log.info("woken from slumber by signal: {}".format(signal_name))
                     yield signal_int
 
                 if cc in r:
@@ -172,7 +171,10 @@ def await_pg_notifications(
                             yield n
 
             except select.error as e:
-                e_num, e_message = e
+                if sys.version_info >= (3, 3):
+                    e_num = e.errno 
+                else:
+                    e_num = e[0]
                 if e_num == errno.EINTR:
                     log.debug("EINTR happened during select")
                 else:
@@ -182,5 +184,5 @@ def await_pg_notifications(
             for s in signals_to_handle:
                 if s in original_handlers:
                     signal_name = signal.Signals(s).name
-                    log.debug(f"restoring original handler for: {signal_name}")
+                    log.debug("restoring original handler for: {}".format(signal_name))
                     signal.signal(s, original_handlers[s])
