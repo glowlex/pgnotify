@@ -1,13 +1,12 @@
 [tool.poetry]
-name = "pgnotify"
-version = "0.1"
-authors = [ "Robert Lechte <robertlechte@gmail.com>",]
+name = "pgnotify_u"
+version = "0.2"
+authors = [ "Robert Lechte <robertlechte@gmail.com>", "glowlex <glowlex@yandex.ru>",]
 license = "Unlicense"
 readme = "README.md"
-description = "Easily LISTEN to PostgreSQL NOTIFY notifications"
-
-repository = "https://github.com/djrobstep/pgnotify"
-homepage = "https://github.com/djrobstep/pgnotify"
+description = "Easily LISTEN and NOTIFY to PostgreSQL notifications system"
+repository = "https://github.com/glowlex/pgnotify"
+homepage = "https://github.com/glowlex/pgnotify"
 
 [tool.poetry.dependencies]
 python = "*"
@@ -25,4 +24,7 @@ flake8 = "*"
 twine = "*"
 wheel = "*"
 isort = "*"
-black = {python=">=3.6", version=">=18.9b0"}
+
+[tool.poetry.dev-dependencies.black]
+python = ">=3.6"
+version = ">=18.9b0"

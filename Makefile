@@ -3,7 +3,7 @@
 # test commands and arguments
 tcommand = py.test -x
 tmessy = -svv
-targs = --cov-report term-missing --cov pgnotify
+targs = --cov-report term-missing --cov pgnotify_u
 
 check: fmt test lint
 
@@ -21,5 +21,5 @@ fmt:
 	black .
 
 lint:
-	flake8 pgnotify
+	flake8 pgnotify_u
 	flake8 tests

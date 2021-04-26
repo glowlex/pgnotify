@@ -1,6 +1,6 @@
 import signal
 
-from pgnotify import await_pg_notifications, get_dbapi_connection
+from pgnotify_u import await_pg_notifications, get_dbapi_connection
 
 # the first parameter of the await_pg_notifications
 # loop is a dbapi connection in autocommit mode

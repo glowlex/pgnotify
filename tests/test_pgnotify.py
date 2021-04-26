@@ -9,8 +9,8 @@ from pytest import raises
 from sqlalchemy import create_engine
 from sqlbag import S
 
-from pgnotify import await_pg_notifications
-from pgnotify.notify import get_dbapi_connection, pg_notify
+from pgnotify_u import await_pg_notifications
+from pgnotify_u.notify import get_dbapi_connection, pg_notify
 
 SIGNALS_TO_HANDLE = [signal.SIGINT]
 
